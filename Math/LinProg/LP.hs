@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, FlexibleInstances, ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances, ScopedTypeVariables #-}
 
 module Math.LinProg.LP (
   compile
@@ -6,20 +6,11 @@ module Math.LinProg.LP (
 
 import Data.List
 import Math.LinProg.Types
+import Math.LinProg.Compile
 import Control.Lens
 import Control.Monad.State
 import Control.Monad.Free
 import Data.Maybe
-
-type Equation t v = (LinExpr t v, t) -- LHS and RHS
-
-data CompilerS t v = CompilerS {
-  _objective :: LinExpr t v
-  ,_equals :: [Equation t v]
-  ,_leqs :: [Equation t v]
-} deriving (Eq)
-
-$(makeLenses ''CompilerS)
 
 instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
   show s = unlines $ catMaybes [
@@ -53,8 +44,8 @@ findBounds eqs = (mapMaybe bound singleTerms, eqs \\ filter (isBounded . head . 
     singleTermEqs = filter (\(ts, _) -> length (vars ts) == 1) eqs
     singleTerms = nub $ concatMap (vars . fst) singleTermEqs
 
-    upperBound x = mapMaybe (\(a, c) -> let w = getVar x a in if w == 1 then Nothing else Just c) singleTermEqs
-    lowerBound x = mapMaybe (\(a, c) -> let w = getVar x a in if w == -1 then Nothing else Just c) singleTermEqs
+    upperBound x = mapMaybe (\(a, c) -> let w = getVar x a in if w == 1 then Just (negate c) else Nothing) singleTermEqs
+    lowerBound x = mapMaybe (\(a, c) -> let w = getVar x a in if w == -1 then Just c else Nothing) singleTermEqs
 
     bound v = bound' (lowerBound v) (upperBound v) where
       bound' [] _ = Nothing
@@ -65,24 +56,3 @@ findBounds eqs = (mapMaybe bound singleTerms, eqs \\ filter (isBounded . head . 
         u = minimum us
 
     isBounded v = isJust (bound v)
-
-compile :: (Num t, Show t, Ord t) => LinProg t String () -> String
-compile ast = show $ compile' ast initCompilerS where
-  compile' (Free (Objective a c)) state = compile' c $ state & objective +~ a
-  compile' (Free (EqConstraint a b c)) state = compile' c $ state & equals %~ (split (b-a):)
-  compile' (Free (LeqConstraint a b c)) state = compile' c $ state & leqs %~ (split (b-a):)
-  compile' _ state = state
-
-  initCompilerS = CompilerS
-    0
-    []
-    []
-
-test :: LinProg Double String ()
-test = do
-  let [x, y] = map var ["x", "y"]
-  obj $ 1 + 5 * y + x
-  y =: (1 + x)
-  y >: (-5)
-  x <: 10
-  x >: 0
