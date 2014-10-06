@@ -34,6 +34,10 @@ type LinExpr t v = Fix (LinExpr' t v)
 
 var = Fix . Var
 
+instance Fractional t => Fractional (LinExpr t v) where
+  a / b = Fix (Mul a (1/b))
+  fromRational a = Fix (Lit (fromRational a))
+
 instance Num t => Num (LinExpr t v) where
   a * b = Fix (Mul a b)
   a + b = Fix (Add a b)
@@ -104,3 +108,7 @@ geq b a = liftF (LeqConstraint a b ())
 a =: b = eq a b
 a <: b = leq a b
 a >: b = geq a b
+
+infix 4 =:
+infix 4 <:
+infix 4 >:
