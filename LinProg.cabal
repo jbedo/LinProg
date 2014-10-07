@@ -16,7 +16,7 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Math.LinProg.Types, Math.LinProg.LP
+  exposed-modules:     Math.LinProg.Types, Math.LinProg.LP, Math.LinProg.LPSolve
   -- other-modules:
   other-extensions:    DeriveFunctor, FlexibleInstances, FlexibleContexts, UndecidableInstances, TemplateHaskell, ScopedTypeVariables
   build-depends:       base >=4.7 && <4.8, recursion-schemes >=4.1 && <4.2, free >=4.9 && <4.10, containers >=0.5 && <0.6, lens >=4.4 && <4.5, mtl >=2.1 && <2.2

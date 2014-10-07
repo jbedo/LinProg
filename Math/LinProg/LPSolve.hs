@@ -1,6 +1,9 @@
 {-# LANGUAGE ViewPatterns #-}
 
-module Math.LinProg.LPSolve where
+module Math.LinProg.LPSolve (
+  solve
+  ,ResultCode(..)
+) where
 
 import Control.Applicative
 import Control.Monad
