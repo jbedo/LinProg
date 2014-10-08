@@ -9,12 +9,9 @@ module Math.LinProg.Compile (
   ,leqs
 ) where
 
-import Data.List
 import Math.LinProg.Types
 import Control.Lens
-import Control.Monad.State
 import Control.Monad.Free
-import Data.Maybe
 
 type Equation t v = (LinExpr t v, t) -- LHS and RHS
 

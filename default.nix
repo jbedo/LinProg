@@ -13,6 +13,7 @@ in cabal.mkDerivation (self: {
   pname = "LinProg";
   version = "0.0.0.1";
   src = ./.;
+  isLibrary = true;
   buildDepends = [
     recursionSchemes
     lens

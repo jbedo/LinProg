@@ -20,7 +20,6 @@ module Math.LinProg.Types (
 
 import Data.Functor.Foldable
 import Control.Monad.Free
-import qualified Data.Map as M
 
 data LinExpr' t v a =
   Lit t

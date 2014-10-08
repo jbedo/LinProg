@@ -1,9 +1,19 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
-module Math.LinProg.LPSolve.FFI where
+module Math.LinProg.LPSolve.FFI (
+  ResultCode(..)
+  ,ConstraintType(..)
+  ,LPRec
+  ,setConstrType
+  ,makeLP
+  ,freeLP
+  ,setMat
+  ,setRHS
+  ,solve
+  ,getSol
+) where
 
 import Foreign
 import Foreign.C
-import Foreign.Marshal.Array
 import Control.Applicative ((<$>))
 import qualified Data.Map as M
 
@@ -46,11 +56,11 @@ setConstrType lp i t = fromIntegral <$> c_set_constr_type lp (fromIntegral i) (f
 
 makeLP :: Int -> Int -> IO (Maybe LPRec)
 makeLP n m = do
-  m <- c_make_lp (fromIntegral n) (fromIntegral m)
-  return $ if m == nullPtr then
+  m' <- c_make_lp (fromIntegral n) (fromIntegral m)
+  return $ if m' == nullPtr then
     Nothing
   else
-    Just m
+    Just m'
 
 freeLP :: LPRec -> IO ()
 freeLP m = with m $ \m' -> c_free_lp m'
@@ -66,7 +76,7 @@ solve lp = (lut M.!) . fromIntegral <$> c_solve lp
   where
     lut = M.fromList [
         (-2, NoMemory)
-        ,(0, Optimal)
+        ,(0 :: Int, Optimal)
         ,(1, SubOptimal)
         ,(2, Infeasible)
         ,(3, Unbounded)

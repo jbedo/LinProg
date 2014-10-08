@@ -8,8 +8,6 @@ import Data.List
 import Math.LinProg.Types
 import Math.LinProg.Compile
 import Control.Lens
-import Control.Monad.State
-import Control.Monad.Free
 import Data.Maybe
 
 instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
