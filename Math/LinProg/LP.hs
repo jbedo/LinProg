@@ -1,5 +1,18 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, ScopedTypeVariables #-}
+{-|
+Module      : Math.LinProg.LP
+Description : Compiles LP monad and expressions to a intermediate form.
+Copyright   : (c) Justin Bedő, 2014
+License     : BSD
+Maintainer  : cu@cua0.org
+Stability   : experimental
 
+Linear programs that are specified using the monadic construction are compiled
+to an intermediate data structure that's easier to work with.  The compiled
+state groups objective terms and splits (in)equality constraints into LHS and
+RHS terms, with the LHS containing all variables and the RHS terms containing
+fixed constants.
+-}
 module Math.LinProg.LP (
   compile
   ,Equation
@@ -17,6 +30,7 @@ import Control.Monad.Free
 
 type Equation t v = (LinExpr t v, t) -- LHS and RHS
 
+-- | Compiled state contatining the objective and (in)equality statements.
 data CompilerS t v = CompilerS {
   _objective :: LinExpr t v
   ,_equals :: [Equation t v]
@@ -25,6 +39,7 @@ data CompilerS t v = CompilerS {
 
 $(makeLenses ''CompilerS)
 
+-- | Compiles a linear programming monad to intermediate form which is easier to process
 compile :: (Num t, Show t, Ord t, Eq v) => LinProg t v () -> CompilerS t v
 compile ast = compile' ast initCompilerS where
   compile' (Free (Objective a c)) state = compile' c $ state & objective +~ a
@@ -37,7 +52,7 @@ compile ast = compile' ast initCompilerS where
     []
     []
 
--- Printing to LP format
+-- | Shows a compiled state as LP format.  Requires variable ids are strings.
 instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
   show s = unlines $ catMaybes [
       Just "Minimize"

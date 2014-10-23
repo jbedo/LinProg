@@ -1,5 +1,17 @@
 {-# LANGUAGE ViewPatterns #-}
+{-|
+Module      : Math.LinProg.LPSolve
+Description : Binding for solving LPs with lp_solve library.
+Copyright   : (c) Justin Bedő, 2014
+License     : BSD
+Maintainer  : cu@cua0.org
+Stability   : experimental
 
+This module allows finding the solution to an LP using the lp_solve library.
+The LP is specified using the monad and expressions in Math.LinProg.Types.
+Note that the objective is minimised by default, so negation is needed to
+maximise instead.
+-}
 module Math.LinProg.LPSolve (
   solve
   ,ResultCode(..)
@@ -16,6 +28,7 @@ import Math.LinProg.Types
 import qualified Data.Map as M
 import Prelude hiding (EQ)
 
+-- | Solves an LP using lp_solve.
 solve :: (Eq v, Ord v) => LinProg Double v () -> IO (Either (Maybe ResultCode) [(v, Double)])
 solve (compile -> lp) = do
     model <- makeLP nconstr nvars
