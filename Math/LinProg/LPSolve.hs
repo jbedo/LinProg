@@ -11,7 +11,7 @@ import Data.List
 import Control.Lens
 import Math.LinProg.LPSolve.FFI hiding (solve)
 import qualified Math.LinProg.LPSolve.FFI as F
-import Math.LinProg.Compile
+import Math.LinProg.LP
 import Math.LinProg.Types
 import qualified Data.Map as M
 import Prelude hiding (EQ)
