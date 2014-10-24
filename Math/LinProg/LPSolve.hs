@@ -75,7 +75,7 @@ solve (compile -> lp) = do
     nequals = length (lp ^. equals)
 
     allConstr = (lp ^. equals) ++ (lp ^. leqs)
-    varLUT = M.fromList $ zip (sort $ nub $ concatMap (vars . fst) allConstr) [1..]
+    varLUT = M.fromList $ zip (sort $ nub $ concatMap (vars . fst) allConstr ++ vars (lp ^. objective)) [1..]
 
     with m f = do
       r <- f m
