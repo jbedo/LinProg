@@ -14,6 +14,7 @@ maximise instead.
 -}
 module Math.LinProg.LPSolve (
   solve
+  ,solveWithTimeout
   ,ResultCode(..)
 ) where
 
@@ -29,12 +30,17 @@ import qualified Data.Map as M
 import Prelude hiding (EQ)
 
 -- | Solves an LP using lp_solve.
-solve :: (Eq v, Ord v) => LinProg Double v () -> IO (Either (Maybe ResultCode) [(v, Double)])
-solve (compile -> lp) = do
+solve :: (Eq v, Ord v) => LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
+solve = solveWithTimeout 0
+
+-- | Solves an LP using lp_solve.
+solveWithTimeout :: (Eq v, Ord v) => Integer -> LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
+solveWithTimeout t (compile -> lp) = do
     model <- makeLP nconstr nvars
     case model of
-      Nothing -> return (Left Nothing)
+      Nothing -> return (Nothing, [])
       Just m' -> with m' $ \m -> do
+        setTimeout m t
 
         -- Eqs
         forM_ (zip [1..] $ lp ^. equals) $ \(i, eq) ->
@@ -64,11 +70,9 @@ solve (compile -> lp) = do
           when (w /= 0) $ void $ setMat m 0 (varLUT M.! v) w
 
         res <- F.solve m
-        case res of
-          Optimal -> do
-            sol <- snd <$> getSol nvars m
-            return $ Right (zip (M.keys varLUT) sol)
-          _ -> return $ Left (Just res)
+        sol <- snd <$> getSol nvars m
+        let vars = zip (M.keys varLUT) sol
+        return (Just res, vars)
   where
     nconstr = length allConstr
     nvars = M.size varLUT

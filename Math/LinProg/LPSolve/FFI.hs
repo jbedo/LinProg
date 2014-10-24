@@ -4,6 +4,7 @@ module Math.LinProg.LPSolve.FFI (
   ,ConstraintType(..)
   ,LPRec
   ,setConstrType
+  ,setTimeout
   ,makeLP
   ,freeLP
   ,setMat
@@ -50,6 +51,10 @@ foreign import ccall "set_rh" c_set_rh :: LPRec -> CInt -> CDouble -> IO CChar
 foreign import ccall "solve" c_solve :: LPRec -> IO CInt
 foreign import ccall "get_variables" c_get_variables :: LPRec -> Ptr CDouble -> IO CChar
 foreign import ccall "set_constr_type" c_set_constr_type :: LPRec -> CInt -> CInt -> IO CChar
+foreign import ccall "set_timeout" c_set_timeout :: LPRec -> CLong -> IO ()
+
+setTimeout :: LPRec -> Integer -> IO ()
+setTimeout lp x = c_set_timeout lp (fromIntegral x)
 
 setConstrType :: LPRec -> Int -> ConstraintType -> IO Word8
 setConstrType lp i t = fromIntegral <$> c_set_constr_type lp (fromIntegral i) (fromIntegral $ fromEnum t)
