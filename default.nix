@@ -3,6 +3,7 @@
 , haskellPackages ? (import <nixpkgs> {}).haskellPackages }:
 let
   inherit  (haskellPackages) cabal
+    QuickCheck
     recursionSchemes
     lens
     free;
@@ -15,6 +16,7 @@ in cabal.mkDerivation (self: {
   src = ./.;
   isLibrary = true;
   buildDepends = [
+    QuickCheck
     recursionSchemes
     lens
     free

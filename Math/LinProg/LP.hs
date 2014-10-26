@@ -56,7 +56,7 @@ compile ast = compile' ast initCompilerS where
 instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
   show s = unlines $ catMaybes [
       Just "Minimize"
-      ,Just (showEq $ varTerms (s ^. objective))
+      ,Just (showEq (s ^. objective))
       ,if hasST then Just "Subject to" else Nothing
       ,if hasEqs then Just (intercalate "\n" $ map (\(a, b) -> showEq a ++ " = " ++ show (negate b)) $ s ^. equals) else Nothing
       ,if hasUnbounded then Just (intercalate "\n" $ map (\(a, b) -> showEq a ++ " <= " ++ show (negate b)) unbounded) else Nothing
@@ -64,12 +64,7 @@ instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
       ,if hasBounded then Just (intercalate "\n" $ map (\(l, v, u) -> show l ++ " <= " ++ v ++ " <= " ++ show u) bounded) else Nothing
     ]
     where
-      getVars eq = zip vs ws
-        where
-          vs = vars eq
-          ws = map (`getVar` eq) vs
-
-      showEq = unwords . map (\(a, b) -> render b ++ " " ++ a) . getVars
+      showEq = unwords . map (\(a, b) -> render b ++ " " ++ a) . varTerms
 
       (bounded, unbounded) = findBounds $ s ^. leqs
       hasBounded = not (null bounded)

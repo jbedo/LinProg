@@ -26,10 +26,9 @@ import Math.LinProg.LPSolve.FFI hiding (solve)
 import qualified Math.LinProg.LPSolve.FFI as F
 import Math.LinProg.LP
 import Math.LinProg.Types
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import Prelude hiding (EQ)
 
--- | Solves an LP using lp_solve.
 solve :: (Eq v, Ord v) => LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
 solve = solveWithTimeout 0
 
@@ -44,30 +43,25 @@ solveWithTimeout t (compile -> lp) = do
 
         -- Eqs
         forM_ (zip [1..] $ lp ^. equals) $ \(i, eq) ->
-          forM_ (M.keys varLUT) $ \v -> do
-            let w = getVar v $ fst eq
-                c = negate $ snd eq
-            when (w /= 0) $ do
-              setMat m i (varLUT M.! v) w
-              setConstrType m i EQ
-              setRHS m i c
-              return ()
+          forM_ (varTerms (fst eq)) $ \(v, w) -> do
+            let c = negate $ snd eq
+            setMat m i (varLUT M.! v) w
+            setConstrType m i EQ
+            setRHS m i c
+            return ()
 
         -- Leqs
         forM_ (zip [1+nequals..] $ lp ^. leqs) $ \(i, eq) ->
-          forM_ (M.keys varLUT) $ \v -> do
-            let w = getVar v $ fst eq
-                c = negate $ snd eq
-            when (w /= 0) $ do
-              setMat m i (varLUT M.! v) w
-              setConstrType m i LE
-              setRHS m i c
-              return ()
+          forM_ (varTerms (fst eq)) $ \(v, w) -> do
+            let c = negate $ snd eq
+            setMat m i (varLUT M.! v) w
+            setConstrType m i LE
+            setRHS m i c
+            return ()
 
         -- Objective
-        forM_ (M.keys varLUT) $ \v -> do
-          let w = getVar v $ lp ^. objective
-          when (w /= 0) $ void $ setMat m 0 (varLUT M.! v) w
+        forM_ (varTerms (lp ^. objective)) $ \(v, w) -> do
+          void $ setMat m 0 (varLUT M.! v) w
 
         res <- F.solve m
         sol <- snd <$> getSol nvars m
