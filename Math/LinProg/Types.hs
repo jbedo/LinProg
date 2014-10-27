@@ -26,14 +26,17 @@ module Math.LinProg.Types (
   ,(<:)
   ,(=:)
   ,(>:)
+  ,bin
+  ,int
 ) where
 
 import Data.Functor.Foldable
 import Control.Monad.Free
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
 import Test.QuickCheck
 import Control.Applicative
 import Data.List
+import Data.Hashable
 
 -- | Base AST for expressions.  Expressions have factors or type t and
 -- variables referenced by ids of type v.
@@ -117,7 +120,7 @@ rewrite = cata rewrite' where
   rewrite' a = Fix a
 
 -- | Reduces an expression to the variable terms
-varTerms :: (Num t, Eq t, Ord v) => LinExpr t v -> [(v, t)]
+varTerms :: (Num t, Eq t, Hashable v, Eq v) => LinExpr t v -> [(v, t)]
 varTerms = M.toList . cata go . rewrite where
   go (Wvar w a) = M.fromList [(a, w)]
   go (Add a b) = M.unionWith (+) a b
@@ -141,6 +144,8 @@ prettyPrint = cata prettyPrint' where
 -- in the data type).
 data LinProg' t v a =
   Objective !(LinExpr t v) !a
+  | Integer !v !a
+  | Binary !v !a
   | EqConstraint !(LinExpr t v) !(LinExpr t v) !a
   | LeqConstraint !(LinExpr t v) !(LinExpr t v) !a
   deriving (Show, Eq, Functor)
@@ -155,9 +160,15 @@ a =: b = liftF (EqConstraint a b ())
 
 -- | Define an inequality (less than equal) contraint
 a <: b = liftF (LeqConstraint a b ())
---
+
 -- | Define an inequality (greater than equal) contraint
 b >: a = liftF (LeqConstraint a b ())
+
+-- | Declare a variable to be binary
+bin (Fix (Var v)) = liftF (Binary v ())
+
+-- | Declare a variable to be integral
+int (Fix (Var v)) = liftF (Integer v ())
 
 infix 4 =:
 infix 4 <:

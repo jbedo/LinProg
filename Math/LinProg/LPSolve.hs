@@ -26,14 +26,15 @@ import Math.LinProg.LPSolve.FFI hiding (solve)
 import qualified Math.LinProg.LPSolve.FFI as F
 import Math.LinProg.LP
 import Math.LinProg.Types
-import qualified Data.Map.Strict as M
+import qualified Data.HashMap.Strict as M
+import Data.Hashable
 import Prelude hiding (EQ)
 
-solve :: (Eq v, Ord v) => LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
+solve :: (Hashable v, Eq v, Ord v) => LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
 solve = solveWithTimeout 0
 
 -- | Solves an LP using lp_solve.
-solveWithTimeout :: (Eq v, Ord v) => Integer -> LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
+solveWithTimeout :: (Hashable v, Eq v, Ord v) => Integer -> LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
 solveWithTimeout t (compile -> lp) = do
     model <- makeLP nconstr nvars
     case model of
@@ -58,6 +59,14 @@ solveWithTimeout t (compile -> lp) = do
             setConstrType m i LE
             setRHS m i c
             return ()
+
+        -- Ints
+        forM_ (lp ^. ints) $ \v -> do
+          setInt m (varLUT M.! v)
+
+        -- Bins
+        forM_ (lp ^. bins) $ \v -> do
+          setBin m (varLUT M.! v)
 
         -- Objective
         forM_ (varTerms (lp ^. objective)) $ \(v, w) -> do

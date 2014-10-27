@@ -20,6 +20,8 @@ module Math.LinProg.LP (
   ,objective
   ,equals
   ,leqs
+  ,ints
+  ,bins
 ) where
 
 import Data.List
@@ -35,6 +37,8 @@ data CompilerS t v = CompilerS {
   _objective :: LinExpr t v
   ,_equals :: [Equation t v]
   ,_leqs :: [Equation t v]
+  ,_bins :: [v]
+  ,_ints :: [v]
 } deriving (Eq)
 
 $(makeLenses ''CompilerS)
@@ -45,10 +49,14 @@ compile ast = compile' ast initCompilerS where
   compile' (Free (Objective a c)) state = compile' c $ state & objective +~ a
   compile' (Free (EqConstraint a b c)) state = compile' c $ state & equals %~ (split (a-b):)
   compile' (Free (LeqConstraint a b c)) state = compile' c $ state & leqs %~ (split (a-b):)
+  compile' (Free (Integer a b)) state = compile' b $ state & ints %~ (a:)
+  compile' (Free (Binary a b)) state = compile' b $ state & bins %~ (a:)
   compile' _ state = state
 
   initCompilerS = CompilerS
     0
+    []
+    []
     []
     []
 
@@ -62,6 +70,10 @@ instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
       ,if hasUnbounded then Just (intercalate "\n" $ map (\(a, b) -> showEq a ++ " <= " ++ show (negate b)) unbounded) else Nothing
       ,if hasBounded then Just "Bounds" else Nothing
       ,if hasBounded then Just (intercalate "\n" $ map (\(l, v, u) -> show l ++ " <= " ++ v ++ " <= " ++ show u) bounded) else Nothing
+      ,if hasInts then Just "General" else Nothing
+      ,if hasInts then Just (unwords $ s ^. ints) else Nothing
+      ,if hasBins then Just "Binary" else Nothing
+      ,if hasBins then Just (unwords $ s ^. bins) else Nothing
     ]
     where
       showEq = unwords . map (\(a, b) -> render b ++ " " ++ a) . varTerms
@@ -71,6 +83,8 @@ instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
       hasUnbounded = not (null unbounded)
       hasEqs = not (null (s^.equals))
       hasST = hasUnbounded || hasEqs
+      hasInts = not . null $ s ^. ints
+      hasBins = not . null $ s ^. bins
 
       render x = (if x >= 0 then "+" else "") ++ show x
 

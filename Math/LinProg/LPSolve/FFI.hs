@@ -5,6 +5,8 @@ module Math.LinProg.LPSolve.FFI (
   ,LPRec
   ,setConstrType
   ,setTimeout
+  ,setInt
+  ,setBin
   ,makeLP
   ,freeLP
   ,setMat
@@ -52,6 +54,8 @@ foreign import ccall "solve" c_solve :: LPRec -> IO CInt
 foreign import ccall "get_variables" c_get_variables :: LPRec -> Ptr CDouble -> IO CChar
 foreign import ccall "set_constr_type" c_set_constr_type :: LPRec -> CInt -> CInt -> IO CChar
 foreign import ccall "set_timeout" c_set_timeout :: LPRec -> CLong -> IO ()
+foreign import ccall "set_int" c_set_int :: LPRec -> CInt -> CChar -> IO CChar
+foreign import ccall "set_binary" c_set_binary :: LPRec -> CInt -> CChar -> IO CChar
 
 setTimeout :: LPRec -> Integer -> IO ()
 setTimeout lp x = c_set_timeout lp (fromIntegral x)
@@ -75,6 +79,12 @@ setMat a b c d = fromIntegral <$> c_set_mat a (fromIntegral b) (fromIntegral c) 
 
 setRHS :: LPRec -> Int -> Double -> IO Word8
 setRHS a b c = fromIntegral <$> c_set_rh a (fromIntegral b) (realToFrac c)
+
+setInt :: LPRec -> Int -> IO Word8
+setInt m a = fromIntegral <$> c_set_int m (fromIntegral a) 1
+
+setBin :: LPRec -> Int -> IO Word8
+setBin m a = fromIntegral <$> c_set_binary m (fromIntegral a) 1
 
 solve :: LPRec -> IO ResultCode
 solve lp = (lut M.!) . fromIntegral <$> c_solve lp
