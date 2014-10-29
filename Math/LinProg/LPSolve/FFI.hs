@@ -13,6 +13,7 @@ module Math.LinProg.LPSolve.FFI (
   ,setRHS
   ,solve
   ,getSol
+  ,debugDump
 ) where
 
 import Foreign
@@ -56,6 +57,10 @@ foreign import ccall "set_constr_type" c_set_constr_type :: LPRec -> CInt -> CIn
 foreign import ccall "set_timeout" c_set_timeout :: LPRec -> CLong -> IO ()
 foreign import ccall "set_int" c_set_int :: LPRec -> CInt -> CChar -> IO CChar
 foreign import ccall "set_binary" c_set_binary :: LPRec -> CInt -> CChar -> IO CChar
+foreign import ccall "print_debugdump" c_print_debugdump :: LPRec -> CString -> IO ()
+
+debugDump :: LPRec -> FilePath -> IO ()
+debugDump lp path = withCString path $ \str -> c_print_debugdump lp str
 
 setTimeout :: LPRec -> Integer -> IO ()
 setTimeout lp x = c_set_timeout lp (fromIntegral x)

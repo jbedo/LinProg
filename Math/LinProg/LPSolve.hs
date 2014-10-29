@@ -43,38 +43,38 @@ solveWithTimeout t (compile -> lp) = do
         setTimeout m t
 
         -- Eqs
-        forM_ (zip [1..] $ lp ^. equals) $ \(i, eq) ->
-          forM_ (varTerms (fst eq)) $ \(v, w) -> do
-            let c = negate $ snd eq
+        forM_ (zip [1..] $ lp ^. equals) $ \(i, eq) -> do
+          let c = negate $ snd eq
+          setConstrType m i EQ
+          setRHS m i c
+          forM_ (varTerms (fst eq)) $ \(v, w) ->
             setMat m i (varLUT M.! v) w
-            setConstrType m i EQ
-            setRHS m i c
-            return ()
+          return ()
 
         -- Leqs
-        forM_ (zip [1+nequals..] $ lp ^. leqs) $ \(i, eq) ->
-          forM_ (varTerms (fst eq)) $ \(v, w) -> do
-            let c = negate $ snd eq
+        forM_ (zip [1+nequals..] $ lp ^. leqs) $ \(i, eq) -> do
+          let c = negate $ snd eq
+          setConstrType m i LE
+          setRHS m i c
+          forM_ (varTerms (fst eq)) $ \(v, w) ->
             setMat m i (varLUT M.! v) w
-            setConstrType m i LE
-            setRHS m i c
-            return ()
+          return ()
 
         -- Ints
-        forM_ (lp ^. ints) $ \v -> do
+        forM_ (lp ^. ints) $ \v ->
           setInt m (varLUT M.! v)
 
         -- Bins
-        forM_ (lp ^. bins) $ \v -> do
+        forM_ (lp ^. bins) $ \v ->
           setBin m (varLUT M.! v)
 
         -- Objective
-        forM_ (varTerms (lp ^. objective)) $ \(v, w) -> do
+        forM_ (varTerms (lp ^. objective)) $ \(v, w) ->
           void $ setMat m 0 (varLUT M.! v) w
 
         res <- F.solve m
         sol <- snd <$> getSol nvars m
-        let vars = zip (M.keys varLUT) sol
+        let vars = zip varList sol
         return (Just res, vars)
   where
     nconstr = length allConstr
@@ -82,7 +82,8 @@ solveWithTimeout t (compile -> lp) = do
     nequals = length (lp ^. equals)
 
     allConstr = (lp ^. equals) ++ (lp ^. leqs)
-    varLUT = M.fromList $ zip (sort $ nub $ concatMap (vars . fst) allConstr ++ vars (lp ^. objective)) [1..]
+    varList = nub $ concatMap (vars . fst) allConstr ++ vars (lp ^. objective)
+    varLUT = M.fromList $ zip varList [1..]
 
     with m f = do
       r <- f m
