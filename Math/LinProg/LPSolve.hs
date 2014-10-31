@@ -19,16 +19,18 @@ module Math.LinProg.LPSolve (
 ) where
 
 import Control.Applicative
-import Control.Monad
-import Data.List
+import Control.Arrow
 import Control.Lens
-import Math.LinProg.LPSolve.FFI hiding (solve)
-import qualified Math.LinProg.LPSolve.FFI as F
-import Math.LinProg.LP
-import Math.LinProg.Types
-import qualified Data.HashMap.Strict as M
+import Control.Monad
 import Data.Hashable
-import Prelude hiding (EQ)
+import Data.List hiding (nub)
+import Math.LinProg.LP
+import Math.LinProg.LPSolve.FFI hiding (solve)
+import Math.LinProg.Types
+import Prelude hiding (EQ, nub)
+import qualified Data.HashMap.Strict as M
+import qualified Data.HashSet as S
+import qualified Math.LinProg.LPSolve.FFI as F
 
 solve :: (Hashable v, Eq v, Ord v) => LinProg Double v () -> IO (Maybe ResultCode, [(v, Double)])
 solve = solveWithTimeout 0
@@ -47,8 +49,7 @@ solveWithTimeout t (compile -> lp) = do
           let c = negate $ snd eq
           setConstrType m i EQ
           setRHS m i c
-          forM_ (varTerms (fst eq)) $ \(v, w) ->
-            setMat m i (varLUT M.! v) w
+          setRow' m i (fst eq)
           return ()
 
         -- Leqs
@@ -56,8 +57,7 @@ solveWithTimeout t (compile -> lp) = do
           let c = negate $ snd eq
           setConstrType m i LE
           setRHS m i c
-          forM_ (varTerms (fst eq)) $ \(v, w) ->
-            setMat m i (varLUT M.! v) w
+          setRow' m i (fst eq)
           return ()
 
         -- Ints
@@ -69,8 +69,7 @@ solveWithTimeout t (compile -> lp) = do
           setBin m (varLUT M.! v)
 
         -- Objective
-        forM_ (varTerms (lp ^. objective)) $ \(v, w) ->
-          void $ setMat m 0 (varLUT M.! v) w
+        setRow' m 0 (lp ^. objective)
 
         res <- F.solve m
         sol <- snd <$> getSol nvars m
@@ -89,3 +88,7 @@ solveWithTimeout t (compile -> lp) = do
       r <- f m
       freeLP m
       return r
+
+    nub = S.toList . S.fromList
+
+    setRow' m i eq = setRow m i (map (first ((M.!) varLUT)) $ varTerms eq)

@@ -24,11 +24,12 @@ module Math.LinProg.LP (
   ,bins
 ) where
 
-import Data.List
-import Math.LinProg.Types
 import Control.Lens
-import Data.Maybe
 import Control.Monad.Free
+import Data.Hashable
+import Data.List
+import Data.Maybe
+import Math.LinProg.Types
 
 type Equation t v = (LinExpr t v, t) -- LHS and RHS
 
@@ -88,7 +89,7 @@ instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
 
       render x = (if x >= 0 then "+" else "") ++ show x
 
-findBounds :: (Eq v, Num t, Ord t, Eq t) => [Equation t v] -> ([(t, v, t)], [Equation t v])
+findBounds :: (Hashable v, Eq v, Num t, Ord t, Eq t) => [Equation t v] -> ([(t, v, t)], [Equation t v])
 findBounds eqs = (mapMaybe bound singleTerms, eqs \\ filter (isBounded . head . vars . fst) singleTermEqs)
   where
     singleTermEqs = filter (\(ts, _) -> length (vars ts) == 1) eqs

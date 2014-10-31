@@ -3,6 +3,8 @@
 , haskellPackages ? (import <nixpkgs> {}).haskellPackages }:
 let
   inherit  (haskellPackages) cabal
+    ghcCore
+    criterion
     unorderedContainers
     QuickCheck
     recursionSchemes
@@ -17,6 +19,8 @@ in cabal.mkDerivation (self: {
   src = ./.;
   isLibrary = true;
   buildDepends = [
+    ghcCore
+    criterion
     unorderedContainers
     QuickCheck
     recursionSchemes

@@ -1,4 +1,4 @@
-{-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ForeignFunctionInterface, ViewPatterns #-}
 module Math.LinProg.LPSolve.FFI (
   ResultCode(..)
   ,ConstraintType(..)
@@ -9,6 +9,7 @@ module Math.LinProg.LPSolve.FFI (
   ,setBin
   ,makeLP
   ,freeLP
+  ,setRow
   ,setMat
   ,setRHS
   ,solve
@@ -58,6 +59,7 @@ foreign import ccall "set_timeout" c_set_timeout :: LPRec -> CLong -> IO ()
 foreign import ccall "set_int" c_set_int :: LPRec -> CInt -> CChar -> IO CChar
 foreign import ccall "set_binary" c_set_binary :: LPRec -> CInt -> CChar -> IO CChar
 foreign import ccall "print_debugdump" c_print_debugdump :: LPRec -> CString -> IO ()
+foreign import ccall "hs_set_row" c_hs_set_row :: LPRec -> CInt -> CInt -> Ptr CInt -> Ptr CDouble -> IO CChar
 
 debugDump :: LPRec -> FilePath -> IO ()
 debugDump lp path = withCString path $ \str -> c_print_debugdump lp str
@@ -81,6 +83,15 @@ freeLP m = with m $ \m' -> c_free_lp m'
 
 setMat :: LPRec -> Int -> Int -> Double -> IO Word8
 setMat a b c d = fromIntegral <$> c_set_mat a (fromIntegral b) (fromIntegral c) (realToFrac d)
+
+setRow :: LPRec -> Int -> [(Int, Double)] -> IO Word8
+setRow m row (unzip -> (cols, ws)) = fmap fromIntegral $ withArray (map fromIntegral cols) $ \c ->
+                                                           withArray (map realToFrac ws) $ \w ->
+                                                             c_hs_set_row m
+                                                                          (fromIntegral row)
+                                                                          (fromIntegral (length cols))
+                                                                          c
+                                                                          w
 
 setRHS :: LPRec -> Int -> Double -> IO Word8
 setRHS a b c = fromIntegral <$> c_set_rh a (fromIntegral b) (realToFrac c)

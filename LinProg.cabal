@@ -19,8 +19,22 @@ library
   exposed-modules:     Math.LinProg.Types, Math.LinProg.LP, Math.LinProg.LPSolve
   other-modules:       Math.LinProg.LPSolve.FFI
   extra-libraries:     lpsolve55
-  extensions:    DeriveFunctor, FlexibleInstances, FlexibleContexts, UndecidableInstances, TemplateHaskell, ScopedTypeVariables, ForeignFunctionInterface, ViewPatterns
+  other-extensions:    DeriveFunctor, FlexibleInstances, FlexibleContexts, UndecidableInstances, TemplateHaskell, ScopedTypeVariables, ForeignFunctionInterface, ViewPatterns
   build-depends:       base >=4.7 && <4.8, recursion-schemes >=4.1 && <4.2, free >=4.9 && <4.10, containers >=0.5 && <0.6, lens >=4.4 && <4.5, mtl >=2.1 && <2.2, QuickCheck, unordered-containers, hashable
   -- hs-source-dirs:
   default-language:    Haskell2010
-  ghc-options: -Wall -fno-warn-missing-signatures -fno-warn-name-shadowing
+  ghc-options:         -Wall -fno-warn-missing-signatures -fno-warn-name-shadowing
+  ghc-prof-options:    -auto-all -caf-all
+  c-sources:           Math/LinProg/LPSolve/bindings.c
+
+benchmark bench
+  type:                exitcode-stdio-1.0
+  main-is:             bench.hs
+  extra-libraries:     lpsolve55
+  other-extensions:    DeriveFunctor, FlexibleInstances, FlexibleContexts, UndecidableInstances, TemplateHaskell, ScopedTypeVariables, ForeignFunctionInterface, ViewPatterns
+  build-depends:       base >=4.7 && <4.8, recursion-schemes >=4.1 && <4.2, free >=4.9 && <4.10, containers >=0.5 && <0.6, lens >=4.4 && <4.5, mtl >=2.1 && <2.2, QuickCheck, unordered-containers, hashable, criterion
+  -- hs-source-dirs:
+  default-language:    Haskell2010
+  ghc-options: -Wall -fno-warn-missing-signatures -fno-warn-name-shadowing -rtsopts
+  ghc-prof-options:    -auto-all -caf-all
+  c-sources:           Math/LinProg/LPSolve/bindings.c

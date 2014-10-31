@@ -30,13 +30,14 @@ module Math.LinProg.Types (
   ,int
 ) where
 
-import Data.Functor.Foldable
-import Control.Monad.Free
-import qualified Data.HashMap.Strict as M
-import Test.QuickCheck
 import Control.Applicative
-import Data.List
+import Control.Monad.Free
+import Data.Functor.Foldable
 import Data.Hashable
+import Data.List
+import qualified Data.HashMap.Strict as M
+import qualified Data.HashSet as S
+import Test.QuickCheck
 
 -- | Base AST for expressions.  Expressions have factors or type t and
 -- variables referenced by ids of type v.
@@ -92,13 +93,14 @@ getVar id x = cata getVar' x - consts x where
   getVar' (Negate a) = negate a
 
 -- | Gets all variables used in an equation.
-vars :: Eq v => LinExpr t v -> [v]
-vars = nub . cata vars' where
-  vars' (Var x) = [x]
-  vars' (Add a b) = a ++ b
-  vars' (Mul a b) = a ++ b
+vars :: (Hashable v, Eq v) => LinExpr t v -> [v]
+vars = S.toList . cata vars' where
+  vars' (Wvar _ x) = S.fromList [x]
+  vars' (Var x) = S.fromList [x]
+  vars' (Add a b) = S.union a b
+  vars' (Mul a b) = S.union a b
   vars' (Negate a) = a
-  vars' _ = []
+  vars' _ = S.empty
 
 -- | Expands terms to Wvars but does not collect like terms
 rewrite :: (Eq t, Num t) => LinExpr t v -> LinExpr t v
