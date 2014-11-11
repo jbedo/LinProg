@@ -45,7 +45,7 @@ data CompilerS t v = CompilerS {
 $(makeLenses ''CompilerS)
 
 -- | Compiles a linear programming monad to intermediate form which is easier to process
-compile :: (Num t, Show t, Ord t, Eq v) => LinProg t v () -> CompilerS t v
+compile :: (Num t, Fractional t, Show t, Ord t, Eq v) => LinProg t v () -> CompilerS t v
 compile ast = compile' ast initCompilerS where
   compile' (Free (Objective a c)) state = compile' c $ state & objective +~ a
   compile' (Free (EqConstraint a b c)) state = compile' c $ state & equals %~ (split (a-b):)
@@ -62,7 +62,7 @@ compile ast = compile' ast initCompilerS where
     []
 
 -- | Shows a compiled state as LP format.  Requires variable ids are strings.
-instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
+instance (Show t, Num t, Fractional t, Ord t) => Show (CompilerS t String) where
   show s = unlines $ catMaybes [
       Just "Minimize"
       ,Just (showEq (s ^. objective))
@@ -89,7 +89,7 @@ instance (Show t, Num t, Ord t) => Show (CompilerS t String) where
 
       render x = (if x >= 0 then "+" else "") ++ show x
 
-findBounds :: (Hashable v, Eq v, Num t, Ord t, Eq t) => [Equation t v] -> ([(t, v, t)], [Equation t v])
+findBounds :: (Hashable v, Eq v, Num t, Fractional t, Ord t, Eq t) => [Equation t v] -> ([(t, v, t)], [Equation t v])
 findBounds eqs = (mapMaybe bound singleTerms, eqs \\ filter (isBounded . head . vars . fst) singleTermEqs)
   where
     singleTermEqs = filter (\(ts, _) -> length (vars ts) == 1) eqs
